@@ -1,98 +1,282 @@
 # AquaLoop Nexus
 
-AI-powered industrial water intelligence for detecting losses, diagnosing probable causes, identifying recovery and reuse opportunities, and quantifying estimated impact.
+## AI-powered industrial water intelligence and decision support
+
+AquaLoop Nexus helps operators connect simulated telemetry to probable loss causes, recovery opportunities, reuse options, estimated impact, action priority, and repair-impact verification.
 
 ## Problem
 
-Industrial facilities need a practical way to connect abnormal flow and quality readings with probable causes, affected zones, recoverable water, and estimated operational value. This hackathon project demonstrates that workflow with simulated telemetry.
+Industrial water networks produce flow, pressure, consumption, and quality signals that can be difficult to interpret together. A useful operator workflow needs to connect abnormal readings with affected zones, explainable reasons, recoverable water, reuse suitability, and estimated operational value.
+
+This project demonstrates that workflow with controlled, simulated industrial telemetry. It is a hackathon prototype, not a deployment in a real industrial plant.
 
 ## Solution
 
-AquaLoop Nexus combines a Python telemetry simulator, FastAPI services, explainable anomaly analysis, water-balance calculations, conservative recovery estimates, prototype reuse suitability, and a live React dashboard.
+AquaLoop Nexus combines a Python telemetry simulator, FastAPI services, Isolation Forest anomaly detection, explainable engineering rules, water-balance calculations, recovery estimation, prototype reuse scoring, financial estimates, and a React dashboard.
+
+The dashboard provides live simulated telemetry, zone-level investigation, a network topology, manual reading analysis, an Action Priority Center, what-if controls, charts, and before/after repair comparison.
+
+## Core Workflow
+
+```text
+DETECT -> DIAGNOSE -> QUANTIFY -> RECOVER -> REUSE -> PRIORITIZE ACTION -> VERIFY IMPACT
+```
 
 ## Key Features
 
+- Industrial telemetry simulator with Normal, Leak, Suspicious Usage, Quality Anomaly, Repair, and Reset scenarios
 - Water balance and unexplained-loss calculation
 - Isolation Forest anomaly detection
-- Hybrid loss fingerprinting and probable-event analysis
-- Zone-level analysis with evidence and recommended actions
+- Hybrid AI and explainable engineering-rule loss fingerprinting
+- Probable Leak classification
+- Suspicious Usage classification
+- Water-Quality Anomaly classification
+- Sensor Anomaly classification
+- Zone-level investigation with Detection Reasoning
+- Severity and relative anomaly score
+- Existing recommended actions from the analysis engine
 - Water recovery estimation
-- Prototype reuse suitability for five destinations
+- Reuse suitability analysis for Cooling, Equipment Washing, Utility, Process Use, and Boiler Feed
 - Estimated financial impact
-- What-if loss and repair simulation
+- Action Priority Center
+- What-if simulation controls
 - Before/after repair impact verification
-- Event history and live telemetry charts
-
-## How It Works
-
-```text
-DETECT
-	-> DIAGNOSE
-	-> QUANTIFY
-	-> RECOVER
-	-> REUSE
-	-> VERIFY IMPACT
-```
-
-The simulator generates stable, zone-specific industrial telemetry. The backend calculates water balance, scores anomalies, applies engineering rules, estimates recovery and reuse opportunities, and exposes the results through REST endpoints. The dashboard polls the services and presents the decision-support story.
+- Live simulated telemetry charts
+- Industrial Water Network visualization using React Flow
+- Manual telemetry input and analysis through the existing analysis pipeline
 
 ## AI Approach
 
-- Isolation Forest is trained once on generated normal telemetry using flow, pressure, consumption, pH, turbidity, and conductivity features.
-- Explainable engineering rules interpret the model signal using baseline deviations.
-- Loss fingerprints include probable leak, suspicious usage pattern, water-quality anomaly, and sensor anomaly.
-- Anomaly scores are relative anomaly indicators, not calibrated probabilities.
+The anomaly detector uses scikit-learn Isolation Forest. It is trained on generated normal telemetry from the simulator. Relevant features include:
+
+- Flow rate
+- Pressure
+- Consumption
+- pH
+- Turbidity
+- Conductivity
+
+Engineering-inspired rules then interpret model signals and deviations from zone baselines. The loss fingerprinting layer combines these signals to classify probable events, assign severity, produce Detection Reasoning, identify an affected zone, and recommend an action.
+
+Anomaly scores are relative anomaly indicators, not calibrated probabilities. The prototype does not claim model accuracy percentages or guaranteed detection.
+
+## Detection Reasoning
+
+The dashboard presents readable reasoning derived from the existing backend analysis response. Depending on the current reading, evidence can describe flow, pressure, consumption, turbidity, conductivity, or pH deviations, along with the detected pattern and affected zone.
+
+The supported classifications are:
+
+- **Probable Leak**: does not mean a guaranteed leak.
+- **Suspicious Usage Pattern**: does not mean confirmed theft.
+- **Water-Quality Anomaly**: does not mean confirmed contamination.
+- **Sensor Anomaly**: indicates a relative anomaly signal requiring investigation.
+
+## Water Recovery
+
+The backend calculates a water balance from current readings and freshwater input. Unexplained loss is estimated from the difference between water input, process consumption, recovered water, and discharge.
+
+Recovery is a conservative prototype estimate based on the unexplained-loss value and a recovery factor. It is decision support, not a guarantee of recoverable water.
+
+## Water Reuse Opportunities
+
+The reuse optimizer evaluates the current quality profile and recoverable water against destination-specific prototype requirements for:
+
+| Destination | Inputs considered |
+| --- | --- |
+| Cooling | pH, turbidity, conductivity, recoverable volume, anomaly state |
+| Equipment Washing | pH, turbidity, conductivity, recoverable volume, anomaly state |
+| Utility | pH, turbidity, conductivity, recoverable volume, anomaly state |
+| Process Use | Stricter pH, turbidity, conductivity, volume, and anomaly requirements |
+| Boiler Feed | Stricter pH, turbidity, conductivity, volume, and anomaly requirements |
+
+Each destination receives a deterministic suitability score, suitability status, potential reuse volume, treatment/verification flags, and evidence describing the requirements. Potential volume is capped by current recoverable water and is zero when a destination is unsuitable.
+
+Reuse suitability is prototype decision support, not certified safe reuse or automatic approval. Treatment and verification thresholds are prototype conditions, not universal industrial standards.
+
+## Financial Impact
+
+Financial impact is calculated from estimated freshwater avoided, treatment cost assumptions, pumping cost assumptions, and freshwater cost assumptions already present in the backend.
+
+The dashboard reports estimated daily, monthly, and annual values. These are modelled estimates, not guaranteed savings.
+
+## Action Priority Center
+
+The Action Priority Center helps an operator understand which current event deserves attention first. It uses existing event severity, estimated water loss, estimated financial impact, affected zone, Detection Reasoning, and the existing recommended action.
+
+Priority is deterministic:
+
+- **HIGH**: active event with HIGH or CRITICAL severity
+- **MEDIUM**: active event with a lower non-normal severity
+- **LOW**: Normal or Repairing state
+
+This is explainable decision support, not an AI prediction.
+
+## What-If Simulation
+
+The dashboard provides existing controls for:
+
+- Normal through Reset
+- Leak
+- Suspicious Usage
+- Quality Anomaly
+- Repair
+- Reset
+
+These controls change the in-memory simulator scenario. The dashboard then refreshes analysis, water balance, recovery, reuse, financial impact, charts, network status, and repair comparison from the resulting simulated state.
+
+## Manual Input Analysis
+
+Manual Input accepts:
+
+- Zone A, Zone B, Zone C, or Zone D
+- Flow rate in L/min
+- Pressure in bar
+- pH
+- TDS in ppm
+- Optional timestamp
+
+The reading is sent through the existing endpoint and analysis pipeline:
+
+```text
+POST /api/analyze-reading
+```
+
+Manual readings are labeled as Manual Reading and are not presented as historical live simulator telemetry. The live telemetry charts remain simulator-only.
+
+## System Architecture
+
+```text
+Industrial Telemetry Simulator
+	|
+	v
+FastAPI Backend
+	|
+	v
+Analytics / AI / Recovery / Reuse / Financial Services
+	|
+	v
+REST API
+	|
+	v
+React Dashboard
+```
 
 ## Technical Stack
 
-- Frontend: React + TypeScript + Vite
-- UI and charts: Tailwind CSS configuration, custom CSS, Recharts, React Flow, and Lucide React
-- Backend: Python + FastAPI + Pydantic
-- AI: scikit-learn Isolation Forest plus explainable engineering rules
-- Data: Simulated industrial telemetry
-- Database: SQLite-ready architecture; the current MVP keeps simulator state in memory
+### Frontend
 
-## Architecture
+- React
+- TypeScript
+- Vite
+- Recharts
+- React Flow
+- Lucide React
+- Tailwind CSS configuration
+- Custom CSS
 
-```text
-Python Sensor Simulator
-				-> FastAPI Backend
-				-> Analytics / AI / Recovery Services
-				-> REST API
-				-> React Dashboard
-```
+### Backend
+
+- Python
+- FastAPI
+- Pydantic
+- NumPy
+- Uvicorn
+
+Pandas is not currently imported by the backend or listed in `backend/requirements.txt`; it is not required by the current runtime.
+
+### AI
+
+- scikit-learn
+- Isolation Forest
+- Explainable engineering rules
+
+### Data and storage
+
+- Simulated industrial telemetry
+- Simulator state and applicable prototype state are kept in memory
+- No persistent database is required by the current implementation
+
+SQLite or another persistent store could be considered for future telemetry and event history persistence, but it is not currently used.
+
+## API Endpoints
+
+### System and telemetry
+
+| Method | Endpoint |
+| --- | --- |
+| GET | `/api/health` |
+| GET | `/api/sensors?limit=100` |
+| GET | `/api/dashboard` |
+| GET | `/api/water-balance` |
+
+### Analysis
+
+| Method | Endpoint |
+| --- | --- |
+| GET | `/api/analysis` |
+| GET | `/api/events?limit=50` |
+| POST | `/api/analyze-reading` |
+
+### Recovery and value
+
+| Method | Endpoint |
+| --- | --- |
+| GET | `/api/recovery` |
+| GET | `/api/reuse` |
+| GET | `/api/financial-impact` |
+
+### Simulator controls
+
+| Method | Endpoint |
+| --- | --- |
+| POST | `/api/simulator/leak` |
+| POST | `/api/simulator/unauthorized-usage` |
+| POST | `/api/simulator/quality-anomaly` |
+| POST | `/api/simulator/repair` |
+| POST | `/api/simulator/reset` |
+
+The dashboard derives its before/after repair comparison from existing recovery and financial-impact responses. There is no separate `/api/impact` endpoint.
 
 ## Demo Flow
 
-1. Start from Reset / Normal.
-2. Simulate a leak and observe Zone B become a Probable Leak.
-3. Review the AI evidence, anomaly score, water loss, recovery, reuse, and estimated impact.
-4. Select Repair and observe telemetry normalization.
-5. Review the simulated before/after impact, potential water saved, and estimated value recovered.
+1. Start in Normal using Reset.
+2. Select **Simulate Leak**.
+3. Observe Zone B become **Probable Leak**.
+4. Review Detection Reasoning.
+5. Review the Action Priority Center.
+6. Review estimated water-loss impact.
+7. Review the recovery estimate.
+8. Review reuse opportunities.
+9. Review estimated financial impact.
+10. Trigger Repair.
+11. Observe readings return toward Normal.
+12. Review the before/after repair impact verification.
 
-The same controls support suspicious usage and water-quality anomaly scenarios.
+Suspicious Usage and Quality Anomaly scenarios are also supported by the existing controls.
+
+## Prototype Scenario Validation
+
+| Controlled scenario | Expected prototype result |
+| --- | --- |
+| Normal | Normal |
+| Simulated Leak | Probable Leak |
+| Suspicious Usage | Suspicious Usage |
+| Quality Anomaly | Water-Quality Anomaly |
+| Repair | Returns toward Normal |
+| Reset | Normal |
+
+These are controlled prototype scenarios and are not claims of real-world model accuracy, guaranteed leak detection, or plant validation.
 
 ## Running Locally
 
 ### Prerequisites
 
-- Node.js 20 or newer
 - Python 3.11 or newer
-
-### Frontend
-
-From `JARVIS_HACK/frontend`:
-
-```powershell
-npm install
-npm run dev
-```
-
-Frontend URL: `http://localhost:5173`
+- Node.js 20 or newer
 
 ### Backend
 
-From the repository root, install the backend requirements and run:
+From the repository root:
 
 ```powershell
 py -m pip install -r backend\requirements.txt
@@ -101,53 +285,86 @@ py -m uvicorn app.main:app --app-dir backend --reload --port 8000
 
 Backend URL: `http://localhost:8000`
 
-The Windows Python launcher `py` is used above because it is available in the development environment. `python -m uvicorn app.main:app --app-dir backend --reload --port 8000` is equivalent where `python` is on `PATH`.
+### Frontend
 
-## API Endpoints
+From the repository root:
 
-### System and telemetry
+```powershell
+cd frontend
+npm install
+npm run dev
+```
 
-- `GET /api/health`
-- `GET /api/sensors?limit=100`
-- `GET /api/dashboard`
-- `GET /api/water-balance`
+Frontend URL: `http://localhost:5173`
 
-### Analysis
+The Windows Python launcher `py` is used in the commands above. Where Python is on `PATH`, `python -m uvicorn app.main:app --app-dir backend --reload --port 8000` is equivalent.
 
-- `GET /api/analysis`
-- `GET /api/events?limit=50`
+## Project Structure
 
-### Recovery and value
-
-- `GET /api/recovery`
-- `GET /api/reuse`
-- `GET /api/financial-impact`
-
-### Simulator controls
-
-- `POST /api/simulator/leak`
-- `POST /api/simulator/unauthorized-usage`
-- `POST /api/simulator/quality-anomaly`
-- `POST /api/simulator/repair`
-- `POST /api/simulator/reset`
-
-There is currently no `/api/impact` endpoint; the dashboard derives the before/after comparison from the existing recovery and financial-impact responses.
+```text
+JARVIS_HACK/
+├── README.md
+├── backend/
+│   ├── requirements.txt
+│   └── app/
+│       ├── main.py
+│       ├── ai/
+│       │   ├── anomaly_detector.py
+│       │   ├── loss_fingerprint.py
+│       │   └── reuse_optimizer.py
+│       ├── routes/
+│       │   ├── analysis.py
+│       │   ├── health.py
+│       │   ├── recovery.py
+│       │   └── simulator.py
+│       ├── schemas/
+│       │   ├── analysis.py
+│       │   ├── manual_analysis.py
+│       │   ├── recovery.py
+│       │   └── telemetry.py
+│       ├── services/
+│       │   ├── financial_impact.py
+│       │   ├── recovery_engine.py
+│       │   ├── simulator.py
+│       │   └── water_balance.py
+│       └── simulator/
+└── frontend/
+    ├── index.html
+    ├── package.json
+    └── src/
+	├── App.tsx
+	├── App.css
+	├── index.css
+	├── services/api.ts
+	├── types/
+	└── assets/
+```
 
 ## Limitations
 
-This hackathon prototype uses simulated industrial telemetry and provides decision-support estimates. Real deployment would require plant instrumentation, site-specific engineering validation, water-quality requirements, treatment validation, and operational approval.
-
-- A probable leak is not guaranteed leak detection.
-- A suspicious usage pattern is not confirmed theft.
-- A water-quality anomaly is not confirmed contamination.
+- The current prototype uses simulated industrial telemetry.
+- A Probable Leak does not guarantee a leak.
+- A Suspicious Usage Pattern does not confirm theft.
+- A Water-Quality Anomaly does not confirm contamination.
+- Anomaly scores are not calibrated probabilities.
 - Reuse suitability is prototype decision support, not certified safe reuse or automatic approval.
-- Financial impact is estimated and does not represent guaranteed savings.
-- Treatment and verification thresholds are prototypes, not universal industrial standards.
+- Treatment and verification thresholds are prototype conditions, not universal industrial standards.
+- Financial impact is an estimated modelled value, not guaranteed savings.
+- The simulator and applicable prototype state are kept in memory.
+- The system is not validated against a real industrial plant.
+
+Real deployment would require plant instrumentation, site-specific engineering validation, facility-specific calibration, water-quality requirements, treatment validation, operational approval, authentication, monitoring, and security hardening.
 
 ## Future Scope
 
-- SQLite persistence for telemetry and event history
-- More facility-specific calibration and validation
-- Treatment and verification workflow integration
-- Additional scenario and what-if analysis
-- Production observability, authentication, and deployment hardening
+- Persistent telemetry and event history storage, potentially using SQLite or another suitable datastore
+- Facility-specific calibration and validation
+- Plant instrumentation integration
+- Site-specific water-quality and treatment workflows
+- Operational approval and verification workflows
+- Authentication, monitoring, observability, and security hardening
+- Broader scenario and what-if analysis
+
+## Project Status
+
+AquaLoop Nexus is a working hackathon prototype. It provides an end-to-end decision-support demonstration using simulated telemetry, existing explainable analytics, recovery and reuse estimates, financial modelling, action prioritization, and repair-impact comparison. It is not a certified industrial control, safety, contamination, or leak-detection system.
